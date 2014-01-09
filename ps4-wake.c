@@ -21,6 +21,8 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdarg.h>
+#include <time.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -60,6 +62,7 @@ struct ddp_reply
 };
 
 static char *buffer = NULL, *iface = NULL;
+static char *pkt_input, *pkt_output, *json_buffer;
 static char *host_remote = NULL, *cred = NULL;
 static int rc, broadcast = 0, probe = 0, json = 0, verbose = 0, probes = _PROBES;
 static int sd = -1;
@@ -147,6 +150,64 @@ static int iface_get_bcast_addr(const char *iface, struct sockaddr_in *sa)
     return 0;
 }
 
+static void json_output(struct ddp_reply *reply)
+{
+    char *p = json_buffer;
+
+    const char *host_id = p, *host_name = p, *host_type = p;
+    const char *running_app_name = p, *running_app_titleid = p;
+    const char *version = p;
+
+    short code = 0, host_request_port = 0;
+
+    sprintf(p, "null");
+    p += strlen(json_buffer) + 1;
+
+    code = reply->code;
+    
+    if (reply->host_id != NULL) {
+        host_id = p;
+        sprintf(p, "\"%s\"", reply->host_id);
+        p += strlen(p) + 1;
+    }
+    if (reply->host_name != NULL) {
+        host_name = p;
+        sprintf(p, "\"%s\"", reply->host_name);
+        p += strlen(p) + 1;
+    }
+    if (reply->host_type != NULL) {
+        host_type = p;
+        sprintf(p, "\"%s\"", reply->host_type);
+        p += strlen(p) + 1;
+    }
+    if (reply->running_app_name != NULL) {
+        running_app_name = p;
+        sprintf(p, "\"%s\"", reply->running_app_name);
+        p += strlen(p) + 1;
+    }
+    if (reply->running_app_titleid != NULL) {
+        running_app_titleid = p;
+        sprintf(p, "\"%s\"", reply->running_app_titleid);
+        p += strlen(p) + 1;
+    }
+    if (reply->version != NULL) {
+        version = p;
+        sprintf(p, "\"%s\"", reply->version);
+        p += strlen(p) + 1;
+    }
+
+    host_request_port = reply->host_request_port;
+
+    fprintf(stdout,
+        "{\"code\":%hd,\"host_id\":%s,\"host_name\":%s,\"host_type\":%s,"
+        "\"running_app_name\":%s,\"running_app_titleid\":%s,"
+        "\"version\":%s,\"host_request_port\":%hd,\"timestamp\":%ld}\n",
+        code, host_id, host_name, host_type,
+        running_app_name, running_app_titleid,
+        version, host_request_port, (long)time(NULL)
+    );
+}
+
 void onexit(void)
 {
     if (host_remote != NULL) free(host_remote);
@@ -182,6 +243,16 @@ static void usage(int rc)
 int main(int argc, char *argv[])
 {
     atexit(onexit);
+
+    long page_size = getpagesize();
+    long buffer_size = page_size * 3;
+
+    buffer = malloc(buffer_size);
+    memset(buffer, 0, buffer_size);
+
+    pkt_input = buffer;
+    pkt_output = buffer + page_size;
+    json_buffer = buffer + page_size * 2;
 
     static struct option options[] =
     {
@@ -324,18 +395,12 @@ int main(int argc, char *argv[])
     tv.tv_usec = 0;
 
     if (setsockopt(sd,
-        SOL_SOCKET, SO_RCVTIMEO,(char *)&tv, sizeof(struct timeval)) == -1) {
+        SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval)) == -1) {
         fprintf(stderr, "Error setting socket read time-out: %s\n", strerror(errno));
         return _EXIT_SOCKET;
     }
 
-    long page_size = getpagesize();
-    long buffer_size = page_size * 2;
-
-    buffer = malloc(buffer_size);
-    memset(buffer, 0, buffer_size);
-
-    sprintf(buffer,
+    sprintf(pkt_output,
         "SRCH * HTTP/1.1\n"
         "device-discovery-protocol-version:%s\n",
         _DDP_VERSION);
@@ -351,14 +416,14 @@ int main(int argc, char *argv[])
     int found_device = 0;
     for (int i = 0; i < probes; i++) {
         sa_remote.sin_port = htons(port_remote);
-        bytes = sendto(sd, buffer, strlen(buffer) + 1, 0,
+        bytes = sendto(sd, pkt_output, strlen(pkt_output) + 1, 0,
             (struct sockaddr *)&sa_remote, sizeof(struct sockaddr_in));
         if (bytes < 0) {
             fprintf(stderr, "Error writing packet: %s\n", strerror(errno));
         }
 
         sock_size = sizeof(struct sockaddr_in);
-        bytes = recvfrom(sd, buffer + page_size, page_size, 0,
+        bytes = recvfrom(sd, pkt_input, page_size, 0,
             (struct sockaddr *)&sa_remote, &sock_size);
         if (bytes < 0) {
             if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -367,7 +432,7 @@ int main(int argc, char *argv[])
             }
         }
         else {
-            if (ddp_parse(buffer + page_size, reply) != 0) continue;
+            if (ddp_parse(pkt_input, reply) != 0) continue;
             found_device = 1;
             break;
         }
@@ -404,12 +469,14 @@ int main(int argc, char *argv[])
         }
         else fputc('.', stderr);
         fputc('\n', stderr);
+
+        if (probe && json) json_output(reply);
     }
 
     if (probe)
         return _EXIT_SUCCESS;
 
-    sprintf(buffer,
+    sprintf(pkt_output,
         "WAKEUP * HTTP/1.1\n"
         "client-type:%s\n"
         "auth-type:%s\n"
@@ -420,7 +487,7 @@ int main(int argc, char *argv[])
     if (verbose) fprintf(stderr, "Sending wake-up...\n");
 
     sa_remote.sin_port = htons(port_remote);
-    bytes = sendto(sd, buffer, strlen(buffer), 0,
+    bytes = sendto(sd, pkt_output, strlen(pkt_output), 0,
         (struct sockaddr *)&sa_remote, sizeof(struct sockaddr_in));
     if (bytes < 0) {
         fprintf(stderr, "Error writing packet: %s\n", strerror(errno));

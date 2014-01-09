@@ -8,7 +8,7 @@ In order to wake your PS4 remotely, the PS4 must be in Standby mode.  Check the 
 
 If you just wish to see the current status of your PS4, you do not require a "user credential" number.
 
-For wake-up support, you need to obtain a "user credential" which requires a Vita that has already been paired with the PS4.  You then need to capture and examine the initial few UDP packets sent form the Vita when launching the PS4 Link application.  Under Unix-like (Linux, BSD, OSX) operating systems you can use tcpdump.  The traffic must be captured from your home network's gateway in order to see these packets.  Ensure the Vita is connecting to the PS4 through it's wired interface.
+For wake-up support, you need to obtain a "user credential" which requires a Vita that has already been paired with the PS4.  You then need to capture and examine the initial few UDP packets sent from the Vita when launching the PS4 Link application.  Under Unix-like (Linux, BSD, OSX) operating systems you can use tcpdump.  The traffic must be captured from your home network's gateway in order to see these packets.  Ensure the Vita is connecting to the PS4 through it's wired interface.
 
 An example capture using tcpdump:
 
@@ -77,6 +77,5 @@ To wake-up your PS4 using 123456 as the "user credential":
 To Do
 -----
 
-- Add JSON output support.
 - Add support for multiple PS4 devices.
 
