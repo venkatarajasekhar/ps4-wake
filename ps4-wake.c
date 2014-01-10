@@ -141,7 +141,7 @@ static int iface_get_bcast_addr(const char *iface, struct sockaddr_in *sa)
         if (strcmp(ifa->ifa_name, iface)) continue;
 
         memcpy(&sa->sin_addr,
-            &((struct sockaddr_in *)ifa->ifa_ifu.ifu_broadaddr)->sin_addr,
+            &((struct sockaddr_in *)ifa->ifa_dstaddr)->sin_addr,
             sizeof(struct in_addr));
 
         break;
@@ -391,17 +391,8 @@ int main(int argc, char *argv[])
     }
 
     if (iface != NULL) {
-        if ((setsockopt(sd,
-            SOL_SOCKET, SO_BINDTODEVICE, (const char *)iface, sizeof(iface))) == -1) {
-            if (errno == EPERM) {
-                if (iface_get_bcast_addr(iface, &sa_remote) != 0)
-                    return _EXIT_SOCKET;
-            }
-            else {
-                fprintf(stderr, "Error binding to interface: %s: %s\n", iface, strerror(errno));
-                return _EXIT_SOCKET;
-            }
-        }
+        if (iface_get_bcast_addr(iface, &sa_remote) != 0)
+            return _EXIT_SOCKET;
     }
 
     struct timeval tv;
