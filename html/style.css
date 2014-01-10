@@ -1,0 +1,96 @@
+body {
+  margin: 20px;
+  background-color: #3C3C3E;
+  font-size: 10px;
+  font-family: Helvetica Neue, Helvetica, sans-serif;
+}
+#page {
+  margin: 0 auto;
+  text-align: left;
+  width: 560px;
+  opacity: 0.9;
+  background-color: #AAAAAA;
+  border: 3px solid;
+  border-color: #030C4C;
+  -webkit-border-bottom-right-radius: 16px;
+  -webkit-border-bottom-left-radius: 16px;
+  -moz-border-radius-bottomright: 16px;
+  -moz-border-radius-bottomleft: 16px;
+  border-bottom-right-radius: 16px;
+  border-bottom-left-radius: 16px;
+  box-shadow: 10px 10px 20px #000000;
+}
+.row_even {
+  background-color: #CCCCCC;
+}
+.row_odd {
+  background-color: #EEEEEE;
+}
+#header {
+  background-color: #1C2674;
+  padding: 10px 10px;
+}
+#content {
+  padding: 10px 10px;
+}
+.activity {
+  font-size: 15px;
+  padding-left: 20px;
+}
+#ps4_name {
+  color: #FFFFFF;
+  font-size: 20px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px #000000;
+}
+#ps4_status {
+  color: #FFFFFF;
+  font-size: 20px;
+  text-align: center;
+  text-shadow: 0 0 8px #000000;
+}
+#ps4_updated {
+  text-align: right;
+  padding-right: 20px;
+}
+table {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+#info {
+  font-size: 12px;
+  text-align: center;
+  padding-bottom: 2px;
+}
+#source {
+  text-align: center;
+}
+#copyright {
+  text-align: center;
+}
+hr {
+  color: #000000;
+  background-color: #1C2674;
+  height: 5px;
+  border-width: 0;
+}
+a:link {
+  color: #1C2674;
+  text-decoration: none;
+}
+a:visited {
+  color: #1C2674;
+  text-decoration: none;
+}
+a:hover {
+  color: #1C2674;
+  text-decoration: underline;
+}
+a:active {
+  color: #1C2674;
+  text-decoration: underline;
+}
+/*
+ * vi: expandtab shiftwidth=2 softtabstop=2 tabstop=2
+ * */
