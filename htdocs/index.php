@@ -2,6 +2,7 @@
 <head>
 <title>PlayStation&reg;4 Status</title>
 <link href="style.css" rel="stylesheet" type="text/css">
+<link rel="icon" href=/ps4/favicon.ico sizes="32x32" type=image/vnd.microsoft.icon>
 <script src="jquery-2.0.3.min.js"></script>
 </head>
 <body>
