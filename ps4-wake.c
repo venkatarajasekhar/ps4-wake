@@ -21,7 +21,6 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include <stdarg.h>
 #include <time.h>
 
 #include <sys/types.h>
