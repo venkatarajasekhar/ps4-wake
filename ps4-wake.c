@@ -32,6 +32,8 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
+#include "sha1.h"
+
 #define _VERSION            "1.0"
 #define _DST_PORT           987
 #define _PROBES             6
@@ -158,13 +160,9 @@ static void json_output(struct ddp_reply *reply)
     const char *running_app_name = p, *running_app_titleid = p;
     const char *version = p;
 
-    short code = 0, host_request_port = 0;
-
     sprintf(p, "null");
     p += strlen(json_buffer) + 1;
 
-    code = reply->code;
-    
     if (reply->host_id != NULL) {
         host_id = p;
         sprintf(p, "\"%s\"", reply->host_id);
@@ -196,15 +194,32 @@ static void json_output(struct ddp_reply *reply)
         p += strlen(p) + 1;
     }
 
-    host_request_port = reply->host_request_port;
+    memcpy(p, &reply->code, sizeof(short));
+    p += sizeof(short);
+    memcpy(p, &reply->host_request_port, sizeof(short));
+    p += sizeof(short);
+
+    sha1 sha1_ctx;
+    sha1_init(&sha1_ctx);
+    sha1_write(&sha1_ctx, json_buffer, (size_t)(p - json_buffer));
+
+    uint8_t *sha1_binary = sha1_result(&sha1_ctx);
+
+    char sha1_fingerprint[SHA1_HASH_LENGTH * 2 + 1];
+    p = sha1_fingerprint;
+
+    for (int i = 0; i < SHA1_HASH_LENGTH; i++, p += 2)
+        sprintf(p, "%02x", sha1_binary[i]);
 
     fprintf(stdout,
         "{\"code\":%hd,\"host_id\":%s,\"host_name\":%s,\"host_type\":%s,"
         "\"running_app_name\":%s,\"running_app_titleid\":%s,"
-        "\"version\":%s,\"host_request_port\":%hd,\"timestamp\":%ld}\n",
-        code, host_id, host_name, host_type,
+        "\"version\":%s,\"host_request_port\":%hd,\"timestamp\":%ld,"
+        "\"fingerprint\":\"%s\"}\n",
+        reply->code, host_id, host_name, host_type,
         running_app_name, running_app_titleid,
-        version, host_request_port, (long)time(NULL)
+        version, reply->host_request_port, (long)time(NULL),
+        sha1_fingerprint
     );
 }
 
