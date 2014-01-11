@@ -7,7 +7,7 @@ date_default_timezone_set('America/New_York');
 header('Content-Type: application/json');
 
 $data = array(
-    'name' => 'Unknown',
+    'name' => 'PS4 Wake',
     'state' => 0,
     'status' => 'Unknown',
     'timestamp' => get_long_time(time()),
