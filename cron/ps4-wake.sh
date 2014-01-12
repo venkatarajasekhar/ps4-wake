@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JSON_HISTORY=60
+JSON_HISTORY=120
 JSON_UPDATE=/tmp/ps4-wake-$(date '+%s').json
 JSON_LOG=/tmp/ps4-wake.log
 

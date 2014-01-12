@@ -23,7 +23,10 @@ function get_history()
 function get_long_time($timestamp)
 {
     $long_time = strftime('%B %e', $timestamp);
-    switch (strftime('%e', $timestamp)) {
+    $day = strftime('%e', $timestamp);
+    if ($day > 3 && $day <= 20)
+        $long_time .= 'th';
+    else switch (substr($day, -1)) {
     case '1':
         $long_time .= 'st';
         break;
@@ -42,21 +45,26 @@ function get_long_time($timestamp)
     return $long_time;
 }
 
-function get_status($entry, &$state, &$status)
+function get_status($entry, &$state, &$status, $filter = false)
 {
     switch ($entry->code) {
     case 620:
+        if ($filter) return false;
         $state = 1;
         $status = 'Standby';
         break;
     case 200:
         $state = 2;
-        if ($entry->running_app_name == NULL)
+        if ($entry->running_app_name == NULL) {
+            if ($filter) return false;
             $status = 'Home Screen';
+        }
         else
             $status = $entry->running_app_name;
         break;
     }
+
+    return true;
 }
 
 function get_diff_time($entry, &$timestamp)
